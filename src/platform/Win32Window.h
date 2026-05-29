@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace fpsgrade {
+namespace outframe {
 
 class Win32Window {
 public:
@@ -25,4 +25,4 @@ private:
     HWND hwnd_ = nullptr;
 };
 
-} // namespace fpsgrade
+} // namespace outframe

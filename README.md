@@ -1,7 +1,7 @@
-# FPSgradeEngine
+# Outframe
 
-FPSgradeEngine is a clean-room Windows upscaling and presentation engine for
-games. It is designed to be independent code under the Apache-2.0 license.
+Outframe is a clean-room Windows upscaling and presentation engine for games.
+It is designed to be independent code under the Apache-2.0 license.
 
 The project is intentionally separate from the Magpie-derived GPL repository.
 Do not copy code, shaders, assets, project files, or detailed implementation
@@ -42,7 +42,7 @@ cmake --build build --config Debug
 Run:
 
 ```powershell
-.\build\Debug\FPSgradeEngine.exe
+.\build\Debug\Outframe.exe
 ```
 
 ## License

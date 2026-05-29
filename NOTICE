@@ -1,8 +1,8 @@
-FPSgradeEngine
+Outframe
 Copyright 2026 Bruno Leal
 
-FPSgradeEngine is a clean-room Windows upscaling project. It does not include
-code, shaders, assets, project files, or documentation copied from Magpie.
+Outframe is a clean-room Windows upscaling project. It does not include code,
+shaders, assets, project files, or documentation copied from Magpie.
 
 The project may study public behavior and platform APIs, but implementation
 must be original or depend only on libraries with compatible licenses.

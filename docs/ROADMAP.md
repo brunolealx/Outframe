@@ -17,7 +17,7 @@
 
 - Integrate Windows Graphics Capture.
 - Capture frames from the selected window.
-- Display capture in the FPSgrade presentation window.
+- Display capture in the Outframe presentation window.
 
 ## 0.4 - Direct3D Renderer
 

@@ -1,16 +1,16 @@
-#include "app/FpsgradeApp.h"
+#include "app/OutframeApp.h"
 
 #include <windows.h>
 
-namespace fpsgrade {
+namespace outframe {
 
-FpsgradeApp::FpsgradeApp(HINSTANCE instance)
+OutframeApp::OutframeApp(HINSTANCE instance)
     : instance_(instance),
-      main_window_(instance, L"FPSgradeEngineWindow", L"FPSgrade Engine") {}
+      main_window_(instance, L"OutframeWindow", L"Outframe") {}
 
-int FpsgradeApp::Run(int show_command) {
+int OutframeApp::Run(int show_command) {
     if (!main_window_.Create(1120, 680)) {
-        MessageBoxW(nullptr, L"Could not create FPSgrade Engine window.", L"FPSgrade Engine", MB_ICONERROR);
+        MessageBoxW(nullptr, L"Could not create Outframe window.", L"Outframe", MB_ICONERROR);
         return 1;
     }
 
@@ -25,4 +25,4 @@ int FpsgradeApp::Run(int show_command) {
     return static_cast<int>(message.wParam);
 }
 
-} // namespace fpsgrade
+} // namespace outframe

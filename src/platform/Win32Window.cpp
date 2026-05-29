@@ -5,7 +5,7 @@
 
 #include <string_view>
 
-namespace fpsgrade {
+namespace outframe {
 
 Win32Window::Win32Window(HINSTANCE instance, const wchar_t* class_name, const wchar_t* title)
     : instance_(instance), class_name_(class_name), title_(title) {}
@@ -117,7 +117,7 @@ void Win32Window::Paint() {
 
     RECT title_rect{48, 44, client.right - 48, 96};
     SelectObject(dc, title_font);
-    DrawTextW(dc, L"FPSgrade Engine", -1, &title_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+    DrawTextW(dc, L"Outframe", -1, &title_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
     SetTextColor(dc, RGB(180, 192, 202));
     SelectObject(dc, body_font);
@@ -134,4 +134,4 @@ void Win32Window::Paint() {
     EndPaint(hwnd_, &paint);
 }
 
-} // namespace fpsgrade
+} // namespace outframe

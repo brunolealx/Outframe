@@ -4,11 +4,11 @@
 
 #include <windows.h>
 
-namespace fpsgrade {
+namespace outframe {
 
-class FpsgradeApp {
+class OutframeApp {
 public:
-    explicit FpsgradeApp(HINSTANCE instance);
+    explicit OutframeApp(HINSTANCE instance);
 
     int Run(int show_command);
 
@@ -17,4 +17,4 @@ private:
     Win32Window main_window_;
 };
 
-} // namespace fpsgrade
+} // namespace outframe

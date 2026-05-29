@@ -1,7 +1,7 @@
 # Clean-Room Rules
 
-FPSgradeEngine must stay independent from GPL codebases so it can keep the
-Apache-2.0 license.
+Outframe must stay independent from GPL codebases so it can keep the Apache-2.0
+license.
 
 ## Allowed
 
