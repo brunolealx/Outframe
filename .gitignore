@@ -1,0 +1,42 @@
+# Build output
+build/
+out/
+bin/
+obj/
+x64/
+x86/
+ARM64/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+*.opensdf
+*.sdf
+*.ipch
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Logs and temp files
+*.log
+*.tmp
+*.pdb
+*.ilk
+*.obj
+*.tlog
+*.lastbuildstate
+
+# Local notes
+.env
+.env.*
+!.env.example
