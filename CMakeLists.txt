@@ -34,11 +34,16 @@ target_include_directories(Outframe PRIVATE
 )
 
 target_link_libraries(Outframe PRIVATE
+    d3d11
+    d3dcompiler
+    dxgi
     user32
     gdi32
     dwmapi
+    runtimeobject
+    windowsapp
 )
 
 if(MSVC)
-    target_compile_options(Outframe PRIVATE /W4 /permissive-)
+    target_compile_options(Outframe PRIVATE /W4 /permissive- /bigobj)
 endif()

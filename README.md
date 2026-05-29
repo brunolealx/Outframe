@@ -24,14 +24,14 @@ This is the first clean-room baseline. It contains:
 - Minimal Win32 desktop app.
 - Initial visible-window enumeration.
 - Click or double-click window selection.
-- Prototype scaled preview window using GDI capture.
+- Prototype scaled preview window using Windows Graphics Capture and Direct3D 11.
 - Initial engineering notes and roadmap.
 
 ## Prototype Controls
 
 - `R`: refresh visible windows.
 - Click a row: select a target window.
-- `Enter`: open a scaled preview of the selected window.
+- `Enter`: open a GPU-rendered preview of the selected window.
 - Double-click a row: select and preview.
 - `Esc` in the preview window: close preview.
 
