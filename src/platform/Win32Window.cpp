@@ -103,6 +103,8 @@ LRESULT Win32Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
     default:
         return DefWindowProcW(hwnd_, message, wparam, lparam);
     }
+
+    return DefWindowProcW(hwnd_, message, wparam, lparam);
 }
 
 void Win32Window::Paint() {
@@ -150,7 +152,8 @@ void Win32Window::Paint() {
 
     int top = 224;
     const int row_height = 34;
-    const int max_rows = std::max(0, (client.bottom - top - 48) / row_height);
+    const int available_height = static_cast<int>(client.bottom) - top - 48;
+    const int max_rows = std::max(0, available_height / row_height);
     const int row_count = std::min(static_cast<int>(candidate_windows_.size()), max_rows);
 
     for (int index = 0; index < row_count; ++index) {
