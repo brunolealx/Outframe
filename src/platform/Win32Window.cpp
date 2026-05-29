@@ -3,6 +3,8 @@
 #include <dwmapi.h>
 #include <windowsx.h>
 
+#include <algorithm>
+#include <format>
 #include <string_view>
 
 namespace outframe {
@@ -51,6 +53,11 @@ void Win32Window::Show(int show_command) {
     UpdateWindow(hwnd_);
 }
 
+void Win32Window::RefreshWindowList() {
+    candidate_windows_ = EnumerateCandidateWindows(hwnd_);
+    InvalidateRect(hwnd_, nullptr, TRUE);
+}
+
 LRESULT CALLBACK Win32Window::WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
     Win32Window* window = nullptr;
 
@@ -75,8 +82,15 @@ LRESULT Win32Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
     case WM_CREATE: {
         const BOOL immersive_dark_mode = TRUE;
         DwmSetWindowAttribute(hwnd_, 20, &immersive_dark_mode, sizeof(immersive_dark_mode));
+        RefreshWindowList();
         return 0;
     }
+    case WM_KEYDOWN:
+        if (wparam == 'R') {
+            RefreshWindowList();
+            return 0;
+        }
+        break;
     case WM_PAINT:
         Paint();
         return 0;
@@ -115,19 +129,41 @@ void Win32Window::Paint() {
         OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
         DEFAULT_PITCH | FF_SWISS, L"Segoe UI");
 
-    RECT title_rect{48, 44, client.right - 48, 96};
+    RECT title_rect{48, 36, client.right - 48, 88};
     SelectObject(dc, title_font);
     DrawTextW(dc, L"Outframe", -1, &title_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
 
     SetTextColor(dc, RGB(180, 192, 202));
     SelectObject(dc, body_font);
 
-    RECT body_rect{50, 112, client.right - 50, 240};
+    RECT body_rect{50, 94, client.right - 50, 160};
     constexpr std::wstring_view body =
-        L"Clean-room baseline ready. Next steps: window picker, Windows Graphics Capture, "
-        L"Direct3D presentation, and original game-focused scaling presets.";
+        L"Select a target window soon. Press R to refresh the visible-window list.";
 
     DrawTextW(dc, body.data(), static_cast<int>(body.size()), &body_rect, DT_LEFT | DT_WORDBREAK);
+
+    RECT list_title_rect{50, 176, client.right - 50, 212};
+    SetTextColor(dc, RGB(239, 244, 248));
+    DrawTextW(dc, L"Visible windows", -1, &list_title_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+
+    SetTextColor(dc, RGB(190, 202, 212));
+
+    int top = 224;
+    const int row_height = 34;
+    const int max_rows = std::max(0, (client.bottom - top - 48) / row_height);
+    const int row_count = std::min(static_cast<int>(candidate_windows_.size()), max_rows);
+
+    for (int index = 0; index < row_count; ++index) {
+        const WindowInfo& window = candidate_windows_[static_cast<size_t>(index)];
+        const std::wstring line = std::format(L"{}  |  PID {}  |  {}", index + 1, window.process_id, window.title);
+        RECT row_rect{50, top + index * row_height, client.right - 50, top + (index + 1) * row_height};
+        DrawTextW(dc, line.c_str(), -1, &row_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+    }
+
+    if (candidate_windows_.empty()) {
+        RECT empty_rect{50, top, client.right - 50, top + row_height};
+        DrawTextW(dc, L"No candidate windows found.", -1, &empty_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
+    }
 
     DeleteObject(title_font);
     DeleteObject(body_font);

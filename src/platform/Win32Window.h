@@ -1,6 +1,10 @@
 #pragma once
 
+#include "platform/WindowInfo.h"
+
 #include <windows.h>
+
+#include <vector>
 
 namespace outframe {
 
@@ -10,6 +14,7 @@ public:
 
     bool Create(int width, int height);
     void Show(int show_command);
+    void RefreshWindowList();
 
     HWND hwnd() const { return hwnd_; }
 
@@ -23,6 +28,7 @@ private:
     const wchar_t* class_name_ = nullptr;
     const wchar_t* title_ = nullptr;
     HWND hwnd_ = nullptr;
+    std::vector<WindowInfo> candidate_windows_;
 };
 
 } // namespace outframe

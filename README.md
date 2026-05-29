@@ -22,6 +22,7 @@ This is the first clean-room baseline. It contains:
 - Apache-2.0 license.
 - CMake project.
 - Minimal Win32 desktop app.
+- Initial visible-window enumeration.
 - Initial engineering notes and roadmap.
 
 ## Build
