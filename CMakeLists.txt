@@ -16,6 +16,8 @@ add_executable(Outframe WIN32
     src/app/OutframeApp.h
     src/platform/Win32Window.cpp
     src/platform/Win32Window.h
+    src/platform/PresentationWindow.cpp
+    src/platform/PresentationWindow.h
     src/platform/WindowInfo.cpp
     src/platform/WindowInfo.h
 )

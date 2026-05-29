@@ -1,9 +1,11 @@
 #pragma once
 
+#include "platform/PresentationWindow.h"
 #include "platform/WindowInfo.h"
 
 #include <windows.h>
 
+#include <memory>
 #include <vector>
 
 namespace outframe {
@@ -23,12 +25,16 @@ private:
 
     LRESULT HandleMessage(UINT message, WPARAM wparam, LPARAM lparam);
     void Paint();
+    void SelectRowAt(int y);
+    void StartPreview();
 
     HINSTANCE instance_ = nullptr;
     const wchar_t* class_name_ = nullptr;
     const wchar_t* title_ = nullptr;
     HWND hwnd_ = nullptr;
     std::vector<WindowInfo> candidate_windows_;
+    std::unique_ptr<PresentationWindow> presentation_window_;
+    int selected_index_ = -1;
 };
 
 } // namespace outframe

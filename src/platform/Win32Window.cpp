@@ -8,6 +8,12 @@
 #include <string_view>
 
 namespace outframe {
+namespace {
+
+constexpr int kListTop = 224;
+constexpr int kRowHeight = 34;
+
+} // namespace
 
 Win32Window::Win32Window(HINSTANCE instance, const wchar_t* class_name, const wchar_t* title)
     : instance_(instance), class_name_(class_name), title_(title) {}
@@ -18,6 +24,7 @@ bool Win32Window::Create(int width, int height) {
     window_class.hInstance = instance_;
     window_class.lpszClassName = class_name_;
     window_class.lpfnWndProc = Win32Window::WindowProc;
+    window_class.style = CS_DBLCLKS;
     window_class.hCursor = LoadCursorW(nullptr, IDC_ARROW);
     window_class.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
 
@@ -55,6 +62,9 @@ void Win32Window::Show(int show_command) {
 
 void Win32Window::RefreshWindowList() {
     candidate_windows_ = EnumerateCandidateWindows(hwnd_);
+    if (selected_index_ >= static_cast<int>(candidate_windows_.size())) {
+        selected_index_ = -1;
+    }
     InvalidateRect(hwnd_, nullptr, TRUE);
 }
 
@@ -90,7 +100,18 @@ LRESULT Win32Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
             RefreshWindowList();
             return 0;
         }
+        if (wparam == VK_RETURN) {
+            StartPreview();
+            return 0;
+        }
         break;
+    case WM_LBUTTONDOWN:
+        SelectRowAt(GET_Y_LPARAM(lparam));
+        return 0;
+    case WM_LBUTTONDBLCLK:
+        SelectRowAt(GET_Y_LPARAM(lparam));
+        StartPreview();
+        return 0;
     case WM_PAINT:
         Paint();
         return 0;
@@ -105,6 +126,32 @@ LRESULT Win32Window::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
     }
 
     return DefWindowProcW(hwnd_, message, wparam, lparam);
+}
+
+void Win32Window::SelectRowAt(int y) {
+    const int index = (y - kListTop) / kRowHeight;
+    if (index >= 0 && index < static_cast<int>(candidate_windows_.size())) {
+        selected_index_ = index;
+        InvalidateRect(hwnd_, nullptr, TRUE);
+    }
+}
+
+void Win32Window::StartPreview() {
+    if (selected_index_ < 0 || selected_index_ >= static_cast<int>(candidate_windows_.size())) {
+        MessageBoxW(hwnd_, L"Select a window first.", L"Outframe", MB_ICONINFORMATION);
+        return;
+    }
+
+    if (presentation_window_ && presentation_window_->IsOpen()) {
+        presentation_window_->Focus();
+        return;
+    }
+
+    presentation_window_ = std::make_unique<PresentationWindow>(instance_, candidate_windows_[static_cast<size_t>(selected_index_)]);
+    if (!presentation_window_->Create()) {
+        MessageBoxW(hwnd_, L"Could not create the preview window.", L"Outframe", MB_ICONERROR);
+        presentation_window_.reset();
+    }
 }
 
 void Win32Window::Paint() {
@@ -140,7 +187,7 @@ void Win32Window::Paint() {
 
     RECT body_rect{50, 94, client.right - 50, 160};
     constexpr std::wstring_view body =
-        L"Select a target window soon. Press R to refresh the visible-window list.";
+        L"Click a window, press Enter to preview it, or double-click a row. Press R to refresh.";
 
     DrawTextW(dc, body.data(), static_cast<int>(body.size()), &body_rect, DT_LEFT | DT_WORDBREAK);
 
@@ -150,21 +197,27 @@ void Win32Window::Paint() {
 
     SetTextColor(dc, RGB(190, 202, 212));
 
-    int top = 224;
-    const int row_height = 34;
-    const int available_height = static_cast<int>(client.bottom) - top - 48;
-    const int max_rows = std::max(0, available_height / row_height);
+    const int available_height = static_cast<int>(client.bottom) - kListTop - 48;
+    const int max_rows = std::max(0, available_height / kRowHeight);
     const int row_count = std::min(static_cast<int>(candidate_windows_.size()), max_rows);
 
     for (int index = 0; index < row_count; ++index) {
         const WindowInfo& window = candidate_windows_[static_cast<size_t>(index)];
         const std::wstring line = std::format(L"{}  |  PID {}  |  {}", index + 1, window.process_id, window.title);
-        RECT row_rect{50, top + index * row_height, client.right - 50, top + (index + 1) * row_height};
+        RECT row_rect{50, kListTop + index * kRowHeight, client.right - 50, kListTop + (index + 1) * kRowHeight};
+        if (index == selected_index_) {
+            HBRUSH selected_brush = CreateSolidBrush(RGB(38, 78, 96));
+            FillRect(dc, &row_rect, selected_brush);
+            DeleteObject(selected_brush);
+            SetTextColor(dc, RGB(248, 252, 255));
+        } else {
+            SetTextColor(dc, RGB(190, 202, 212));
+        }
         DrawTextW(dc, line.c_str(), -1, &row_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
     }
 
     if (candidate_windows_.empty()) {
-        RECT empty_rect{50, top, client.right - 50, top + row_height};
+        RECT empty_rect{50, kListTop, client.right - 50, kListTop + kRowHeight};
         DrawTextW(dc, L"No candidate windows found.", -1, &empty_rect, DT_LEFT | DT_SINGLELINE | DT_VCENTER);
     }
 

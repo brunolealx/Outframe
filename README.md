@@ -23,7 +23,17 @@ This is the first clean-room baseline. It contains:
 - CMake project.
 - Minimal Win32 desktop app.
 - Initial visible-window enumeration.
+- Click or double-click window selection.
+- Prototype scaled preview window using GDI capture.
 - Initial engineering notes and roadmap.
+
+## Prototype Controls
+
+- `R`: refresh visible windows.
+- Click a row: select a target window.
+- `Enter`: open a scaled preview of the selected window.
+- Double-click a row: select and preview.
+- `Esc` in the preview window: close preview.
 
 ## Build
 
