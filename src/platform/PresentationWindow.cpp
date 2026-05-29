@@ -204,6 +204,7 @@ LRESULT PresentationWindow::HandleMessage(UINT message, WPARAM wparam, LPARAM lp
         winrt::init_apartment(winrt::apartment_type::multi_threaded);
         render_ready_ = InitializeDirect3D();
         capture_ready_ = render_ready_ && InitializeCapture();
+        gdi_fallback_ = !capture_ready_;
         SetTimer(hwnd_, kFrameTimer, kFrameIntervalMs, nullptr);
         return 0;
     case WM_SIZE:
@@ -227,8 +228,10 @@ LRESULT PresentationWindow::HandleMessage(UINT message, WPARAM wparam, LPARAM lp
         if (render_ready_ && capture_ready_) {
             Render();
             ValidateRect(hwnd_, nullptr);
+        } else if (gdi_fallback_) {
+            PaintGdiPreview();
         } else {
-            PaintFallback(capture_ready_ ? L"Direct3D preview is not ready." : L"Windows Graphics Capture is not available.");
+            PaintFallback(capture_status_.empty() ? L"Preview is not ready." : capture_status_.c_str());
         }
         return 0;
     case WM_DESTROY:
@@ -382,6 +385,7 @@ bool PresentationWindow::CreateShaders() {
 bool PresentationWindow::InitializeCapture() {
     try {
         if (!winrt::Windows::Graphics::Capture::GraphicsCaptureSession::IsSupported()) {
+            capture_status_ = L"Windows Graphics Capture is not supported or disabled on this system.";
             return false;
         }
 
@@ -394,8 +398,13 @@ bool PresentationWindow::InitializeCapture() {
             capture_item_.Size());
         capture_session_ = frame_pool_.CreateCaptureSession(capture_item_);
         capture_session_.StartCapture();
+        capture_status_.clear();
         return true;
+    } catch (const winrt::hresult_error& error) {
+        capture_status_ = std::format(L"Windows Graphics Capture failed: 0x{:08X} {}", static_cast<uint32_t>(error.code()), error.message().c_str());
+        return false;
     } catch (...) {
+        capture_status_ = L"Windows Graphics Capture failed with an unknown error.";
         return false;
     }
 }
@@ -446,6 +455,8 @@ void PresentationWindow::Render() {
         }
     } catch (...) {
         capture_ready_ = false;
+        gdi_fallback_ = true;
+        capture_status_ = L"Windows Graphics Capture stopped. Falling back to compatibility preview.";
         InvalidateRect(hwnd_, nullptr, TRUE);
         return;
     }
@@ -474,6 +485,90 @@ void PresentationWindow::Render() {
     }
 
     swap_chain_->Present(1, 0);
+}
+
+void PresentationWindow::PaintGdiPreview() {
+    PAINTSTRUCT paint{};
+    HDC dc = BeginPaint(hwnd_, &paint);
+
+    RECT client{};
+    GetClientRect(hwnd_, &client);
+
+    HBRUSH background = CreateSolidBrush(RGB(8, 10, 14));
+    FillRect(dc, &client, background);
+    DeleteObject(background);
+
+    if (!IsWindow(target_.hwnd) || IsIconic(target_.hwnd)) {
+        SetBkMode(dc, TRANSPARENT);
+        SetTextColor(dc, RGB(230, 235, 240));
+        DrawTextW(dc, L"Target window is unavailable or minimized.", -1, &client, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        EndPaint(hwnd_, &paint);
+        return;
+    }
+
+    RECT source_bounds{};
+    if (!GetWindowRect(target_.hwnd, &source_bounds)) {
+        SetBkMode(dc, TRANSPARENT);
+        SetTextColor(dc, RGB(230, 235, 240));
+        DrawTextW(dc, L"Could not read the target window bounds.", -1, &client, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        EndPaint(hwnd_, &paint);
+        return;
+    }
+
+    const int source_width = std::max(1, static_cast<int>(source_bounds.right - source_bounds.left));
+    const int source_height = std::max(1, static_cast<int>(source_bounds.bottom - source_bounds.top));
+    const int destination_width = std::max(1, static_cast<int>(client.right - client.left));
+    const int destination_height = std::max(1, static_cast<int>(client.bottom - client.top));
+
+    const double source_aspect = static_cast<double>(source_width) / static_cast<double>(source_height);
+    const double destination_aspect = static_cast<double>(destination_width) / static_cast<double>(destination_height);
+
+    RECT fitted = client;
+    if (destination_aspect > source_aspect) {
+        const int width = static_cast<int>(destination_height * source_aspect);
+        fitted.left = client.left + (destination_width - width) / 2;
+        fitted.right = fitted.left + width;
+    } else {
+        const int height = static_cast<int>(destination_width / source_aspect);
+        fitted.top = client.top + (destination_height - height) / 2;
+        fitted.bottom = fitted.top + height;
+    }
+
+    HDC source_dc = GetWindowDC(target_.hwnd);
+    if (source_dc) {
+        SetStretchBltMode(dc, HALFTONE);
+        SetBrushOrgEx(dc, 0, 0, nullptr);
+        StretchBlt(
+            dc,
+            fitted.left,
+            fitted.top,
+            fitted.right - fitted.left,
+            fitted.bottom - fitted.top,
+            source_dc,
+            0,
+            0,
+            source_width,
+            source_height,
+            SRCCOPY);
+        ReleaseDC(target_.hwnd, source_dc);
+    }
+
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, RGB(255, 255, 255));
+    const std::wstring overlay = std::format(
+        L"Compatibility preview: {}  |  WGC unavailable  |  Esc closes",
+        target_.title);
+    RECT overlay_rect{18, 14, client.right - 18, 46};
+    DrawTextW(dc, overlay.c_str(), -1, &overlay_rect, DT_LEFT | DT_SINGLELINE | DT_END_ELLIPSIS);
+
+    SetTextColor(dc, RGB(255, 214, 120));
+    RECT status_rect{18, client.bottom - 56, client.right - 18, client.bottom - 18};
+    const std::wstring status = capture_status_.empty()
+        ? L"Using fallback capture. Some games may show black if protected or running exclusive fullscreen."
+        : capture_status_;
+    DrawTextW(dc, status.c_str(), -1, &status_rect, DT_LEFT | DT_WORDBREAK | DT_END_ELLIPSIS);
+
+    EndPaint(hwnd_, &paint);
 }
 
 void PresentationWindow::PaintFallback(const wchar_t* message) {

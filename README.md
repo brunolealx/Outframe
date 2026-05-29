@@ -25,6 +25,7 @@ This is the first clean-room baseline. It contains:
 - Initial visible-window enumeration.
 - Click or double-click window selection.
 - Prototype scaled preview window using Windows Graphics Capture and Direct3D 11.
+- Compatibility preview fallback when Windows Graphics Capture fails.
 - Initial engineering notes and roadmap.
 
 ## Prototype Controls

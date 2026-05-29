@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <wrl/client.h>
 
+#include <string>
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.Capture.h>
@@ -31,6 +32,7 @@ private:
     bool InitializeCapture();
     void ResizeSwapChain();
     void Render();
+    void PaintGdiPreview();
     void PaintFallback(const wchar_t* message);
 
     bool CreateDeviceResources();
@@ -42,9 +44,11 @@ private:
     WindowInfo target_;
     HWND hwnd_ = nullptr;
     bool capture_ready_ = false;
+    bool gdi_fallback_ = false;
     bool render_ready_ = false;
     int width_ = 0;
     int height_ = 0;
+    std::wstring capture_status_;
 
     Microsoft::WRL::ComPtr<ID3D11Device> d3d_device_;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3d_context_;
